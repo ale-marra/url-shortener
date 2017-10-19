@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Giphy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <input id="fullUrl" type="text" size="50" placeholder="insert an url value">
+    <input id="submit" type="submit" value="Get shortened Url" onclick="getInfo()"></input>
+    <input id="submit" type="submit" value="Get All Urls" onclick="getAllUrls()"></input>
+    <p id="description"></p>
+    <table id="result" style="width:100%">
+
+    </table>
+</body>
+
+<script src="//code.jquery.com/jquery-1.12.3.js"></script>
+<script>
+
+function getInfo(){
+    let fullUrl = $("#fullUrl").val();
+    $("#result").empty();
+    updateDescription('');
+    if (fullUrl.length > 0) {
+        $.ajax({
+        type: "POST",
+        url: "/getShortUrl/",
+        contentType: "json",
+        data: JSON.stringify({ fullUrl: fullUrl }),
+        dataType: "json",
+        success: function(result){updateDescription(result.fullUrl + ' can be accessed at <a href="' + result.shortUrl + '">' +  result.shortUrl +'</a>')},
+        error: function(xhr,status,error){updateDescription('error: ' + xhr.responseJSON.message)}
+        })
+    }
+}
+
+function getAllUrls(fast){
+    $.ajax({
+    type: "POST",
+    url: "/getAllUrls/",
+    contentType: "json",
+    dataType: "json",
+    success: function(result){display(result)},
+    error: function(xhr,status,error){updateRes('error: ' + error ) }
+    })
+}
+
+function display(result){
+    updateDescription('');
+    $("#result").append('<tr style="text-align: left;"><th>Full Link</th><th>Short Link</th><th>Created</th><th>Number of Clicks</th></tr>');
+    if (result.length > 0){
+        updateDescription('Below the ' + result.length + ' shortened urls created:')
+        result.map(function(url,number) {
+            $("#result").append('<tr>'+
+                '<td><a href="' + url.shortUrl + '"> ' + url.shortUrl +'</a></td>' + 
+                '<td><a href="' + url.fullUrl + '">' + url.fullUrl +'</a></td>' + 
+                '<td>' + url.createdDate + '</td>' +
+                '<td>' + url.redirectsCount + '</td></tr>');
+        })    
+    }    
+}
+
+function updateDescription(text){
+    $("#description").html(text);
+}
+
+</script>
+</html>
