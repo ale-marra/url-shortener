@@ -1,6 +1,6 @@
 ## Description
 
-A url-shortener:
+A url-shortener
 
 
 ## Compatability
