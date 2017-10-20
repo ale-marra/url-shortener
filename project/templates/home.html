@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Giphy</title>
+    <title>url-shortener</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
@@ -28,7 +28,10 @@ function getInfo(){
         contentType: "json",
         data: JSON.stringify({ fullUrl: fullUrl }),
         dataType: "json",
-        success: function(result){updateDescription(result.fullUrl + ' can be accessed at <a href="' + result.shortUrl + '">' +  result.shortUrl +'</a>')},
+        success: function(result){
+            console.log(result)
+            updateDescription(result.fullUrl + ' can be accessed at <a href="' + result.shortUrl + '">' +  result.shortUrl +'</a>')
+        },
         error: function(xhr,status,error){updateDescription('error: ' + xhr.responseJSON.message)}
         })
     }
@@ -47,16 +50,16 @@ function getAllUrls(fast){
 
 function display(result){
     updateDescription('');
-    $("#result").append('<tr style="text-align: left;"><th>Full Link</th><th>Short Link</th><th>Created</th><th>Number of Clicks</th></tr>');
+    out = '<tr style="text-align: left;"><th>Full Link</th><th>Short Link</th><th>Created</th><th>Number of Clicks</th></tr>'
     if (result.length > 0){
         updateDescription('Below the ' + result.length + ' shortened urls created:')
         result.map(function(url,number) {
-            $("#result").append('<tr>'+
-                '<td><a href="' + url.shortUrl + '"> ' + url.shortUrl +'</a></td>' + 
-                '<td><a href="' + url.fullUrl + '">' + url.fullUrl +'</a></td>' + 
-                '<td>' + url.createdDate + '</td>' +
-                '<td>' + url.redirectsCount + '</td></tr>');
-        })    
+            out += '<tr><td><a href="' + url.shortUrl + '"> ' + url.shortUrl +'</a></td>' + 
+            '<td><a href="' + url.fullUrl + '">' + url.fullUrl +'</a></td>' + 
+            '<td>' + url.createdDate + '</td>' +
+            '<td>' + url.redirectsCount + '</td></tr>';
+        })
+        $("#result").html(out)
     }    
 }
 
