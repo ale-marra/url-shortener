@@ -1,6 +1,7 @@
 from . import app, sql
 from .sql import Url, db
-import requests
+from .functions import createNewRecord
+
 import validators
 from flask import Flask, render_template, json, request, redirect, Response
 from user_agents import parse
@@ -14,9 +15,7 @@ def index():
 @app.route('/<shortUrl>', methods=['GET'])
 def getFullUrl(shortUrl):
 
-    
     user_agent = parse(str(request.user_agent))
-
     if (user_agent.is_pc):
         deviceType = 'desktop'
     elif (user_agent.is_tablet):
@@ -44,7 +43,7 @@ def getShortUrl():
     url = Url.query.filter_by(fullUrl=fullUrl).first()
     if not url:
         root = request.url_root
-        url = sql.createNewRecord(root,fullUrl)
+        url = createNewRecord(root,fullUrl)
 
     return Response(json.dumps(url.returnDict()), status=200) 
 
