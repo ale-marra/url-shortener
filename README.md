@@ -20,22 +20,26 @@ The requirements can be installed with:
 pip3 install -r requirements.txt
 
 
-# Running
+## Running
 
 You can run the app with:
 
 python3 run.py 
 
 and then visit the page http://127.0.0.1:5000/  
-From this page, you can add a new shortened url by inserting the full url in the unique input of the page and clicking on "Get shortened url", or retrieve all the shortened urls by clicking on "Get all urls"
+From this page, you can:
 
-# Testing
+1. add a new shortened url
+2. retrieve all the existing shortened urls
+3. delete all the existing shortened urls
+4. navigate to the shortened url and be redirected to the target url
+5. configure an existing shortened url to redirect to a different target
+
+## Testing
 
 You can test the app with:
 
 python3 test.py 
-
-I couldn't (yet) set a different database for the test, therefore I am testing on the production database.
 
 
 ## Author

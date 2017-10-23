@@ -1,26 +1,45 @@
-from .const import ALLCHARS
 from .sql import Url, db
 import datetime
+import random
+import string
+from sqlalchemy import func
 
+def getRandomUrl():
+    return ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=4))
 
-def convert(n):
-    # 62 is the number of characters used in the short url
-    # this will allow to convert about 15 millions of urls
-    shortUrl = [None]*4
-    for i in range(4):
-        shortUrl[i] = ALLCHARS[i][n%62]
-        n //= 62
-    return ''.join(shortUrl)
-
-def createNewRecord(root, fullUrl):
-    now = datetime.datetime.utcnow()
-    number = db.session.query(Url).count()
-
-    if number > 14776336:
+def getShortUrl():
+    # theoretically, the max number of short urls is 14,776,336
+    # however I limit the insertion to 5,000,000
+    # otherwise this function would be very slow
+    shortUrlCount = db.session.query(Url.shortUrl).distinct().count()
+    if shortUrlCount > 5000000:
         raise Exception('url mapping full')
 
-    shortUrl = root + convert(number)
-    url = Url(fullUrl=fullUrl, shortUrl=shortUrl, createdDate=now)
-    db.session.add(url)
+    while True:
+        shortUrl = getRandomUrl()
+        if Url.query.filter_by(shortUrl=shortUrl).first() == None:
+            break
+
+    return shortUrl
+
+
+def updateRecords(targetUrl, deviceTypes, shortUrl):
+    urls = []
+    for deviceType in deviceTypes:
+        url = Url.query.filter_by(shortUrl=shortUrl, deviceType=deviceType).first()
+        url.targetUrl = targetUrl
+        urls += [url.returnDict()]
     db.session.commit()
-    return url
+    return urls
+
+
+def createRecords(targetUrl, deviceTypes, root):
+    now = datetime.datetime.utcnow()
+    shortUrl = root + getShortUrl()
+    urls = []
+    for deviceType in deviceTypes:
+        url = Url(targetUrl=targetUrl, shortUrl=shortUrl, createdDate=now, deviceType=deviceType)
+        db.session.add(url)
+        urls += [url.returnDict()]
+    db.session.commit()
+    return urls

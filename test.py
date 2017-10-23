@@ -32,23 +32,23 @@ class FlaskrTestCase(unittest.TestCase):
         self.assertTrue(b'Get shortened Url' in response.data)
 
 
-    def add_url(self,fullUrl,shortUrl):
+    def add_url(self,targetUrl,shortUrl,deviceType):
         now = datetime.datetime.utcnow()
-        url = Url(fullUrl=fullUrl, shortUrl=shortUrl, createdDate=now)
+        url = Url(targetUrl=targetUrl, deviceType=deviceType, shortUrl=shortUrl, createdDate=now)
         db.session.add(url)
         db.session.commit()
     
 
     def test_add_url_and_query(self):
-        self.add_url('https://www.jooraccess.com/','/joor')
+        self.add_url('https://www.jooraccess.com/','/joor','Desktop')
         url = Url.query.filter_by(shortUrl='/joor').first()
-        self.assertEqual(url.fullUrl, 'https://www.jooraccess.com/')
+        self.assertEqual(url.targetUrl, 'https://www.jooraccess.com/')
 
 
-    def get_short_url(self,fullUrl):
-        response = self.app.post('/getShortUrl/', data=json.dumps({'fullUrl':fullUrl}))    
-        response = json.loads(response.get_data())
-        return response['shortUrl'][-5:]
+    def get_short_url(self,targetUrl):
+        response = self.app.post('/getshorturl/', data=json.dumps({'targetUrl':targetUrl}))    
+        results = json.loads(response.get_data())
+        return results[0]['shortUrl']
 
 
     def get_full_url(self,shortLink):
@@ -57,21 +57,30 @@ class FlaskrTestCase(unittest.TestCase):
 
 
     def test_redirect_cycles(self):
-        fullUrls = ['https://www.salesforce.com/','https://www.wsj.com/','https://www.youtube.com/']
-        for fullUrl in fullUrls:
-            fullUrl = 'https://www.google.com/'
-            shortLink = self.get_short_url(fullUrl)
-            fullUrlAfterCycle = self.get_full_url(shortLink)
-            self.assertEqual(fullUrlAfterCycle, fullUrl + '?deviceType=other')
+        targetUrls = ['https://www.salesforce.com/','https://www.wsj.com/','https://www.youtube.com/']
+        for targetUrl in targetUrls:
+            shortLink = self.get_short_url(targetUrl)
+            targetUrlAfterCycle = self.get_full_url(shortLink)
+            self.assertEqual(targetUrlAfterCycle, targetUrl)
+
+
+    def test_configure_short_url(self):
+        targetUrl = 'https://twitter.com'
+        shortUrl = self.get_short_url(targetUrl)
+        newTargetUrl = 'https://facebook.com'
+        data = {'shortUrl':shortUrl,'deviceTypes':["Desktop"],'targetUrl':newTargetUrl}
+        response = self.app.post('/configureshorturl/', data=json.dumps(data))    
+        redirect = self.get_full_url(shortUrl)
+        self.assertEqual(redirect, newTargetUrl)
 
 
     def test_get_all_urls(self): 
         urls = ['https://www.google.com/','https://github.com/','https://www.ted.com/']
         for url in urls:
             self.get_short_url(url)
-        response = self.app.post('/getAllUrls/')
-        values = json.loads(response.get_data())
-        self.assertEqual(len(values),3)
+        response = self.app.post('/getallurls/')
+        result = json.loads(response.get_data())
+        self.assertEqual(len(result),9)
 
 
 if __name__ == '__main__':

@@ -6,56 +6,104 @@
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
 <body>
-    <input id="fullUrl" type="text" size="50" placeholder="insert an url value">
-    <input id="submit" type="submit" value="Get shortened Url" onclick="getInfo()"></input>
-    <input id="submit" type="submit" value="Get All Urls" onclick="getAllUrls()"></input>
-    <p id="description"></p>
-    <table id="result" style="width:100%">
-
-    </table>
+    <div>
+        <input id="targetUrl" type="text" size="50" placeholder="insert target url">
+        <input id="submit" type="submit" value="Get shortened Url" onclick="getUrl()"></input>
+    </div>
+    <br>
+    <div>
+        <input id="shortUrl" type="text" size="50" placeholder="insert an existing short url">
+        <input id="newTargetUrl" type="text" size="50" placeholder="insert target url">
+        <label><input class="checkbox" type="checkbox" value="Mobile">Mobile</label>
+        <label><input class="checkbox" type="checkbox" value="Desktop">Desktop</label>
+        <label><input class="checkbox" type="checkbox" value="Tablet">Tablet</label>
+        <input id="submit" type="submit" value="Update target Url" onclick="UpdateTargetUrl()"></input>
+    </div>
+    <br>
+    <div>
+        <input id="submit" type="submit" value="Clear All" onclick="clearAll()"></input>
+        <input id="submit" type="submit" value="Get All Urls" onclick="getAllUrls()"></input>
+    </div>
+    <div>
+        <p id="description"></p>
+        <table id="result" style="width:100%">
+        </table>
+    <div>
 </body>
 <script src="//code.jquery.com/jquery-1.12.3.js"></script>
 <script>
 
-function getInfo(){
-    let fullUrl = $("#fullUrl").val();
-    $("#result").empty();
-    updateDescription('');
-    if (fullUrl.length > 0) {
+function getUrl(){
+    let targetUrl = $("#targetUrl").val();
+    if (targetUrl.length > 0) {
         $.ajax({
         type: "POST",
-        url: "/getShortUrl/",
+        url: "/getshorturl/",
         contentType: "json",
-        data: JSON.stringify({ fullUrl: fullUrl }),
+        data: JSON.stringify({ targetUrl: targetUrl }),
         dataType: "json",
         success: function(result){
-            console.log(result)
-            updateDescription(result.fullUrl + ' can be accessed at <a href="' + result.shortUrl + '">' +  result.shortUrl +'</a>')
+            updateDescription(result[0].targetUrl + ' can be accessed at <a href="' + result[0].shortUrl + '">' +  result[0].shortUrl +'</a>')
         },
         error: function(xhr,status,error){updateDescription('error: ' + xhr.responseJSON.message)}
         })
     }
 }
 
+function UpdateTargetUrl(){
+    let shortUrl = $("#shortUrl").val();
+    let targetUrl = $("#newTargetUrl").val();
+    let deviceTypes = []
+    for (let deviceType of $( ".checkbox")){
+        if (deviceType.checked)
+            deviceTypes.push(deviceType.value)
+    }
+    if (deviceTypes.length > 0) {
+        $.ajax({
+        type: "POST",
+        url: "/configureshorturl/",
+        contentType: "json",
+        data: JSON.stringify({ shortUrl: shortUrl, targetUrl:targetUrl, deviceTypes:deviceTypes}),
+        dataType: "json",
+        success: function(result){
+            console.log(result)
+            updateDescription('Records Updated')
+        },
+        error: function(xhr,status,error){updateDescription('error: ' + xhr.responseJSON.message)}
+        })
+    }
+}
+
+
 function getAllUrls(fast){
     $.ajax({
     type: "POST",
-    url: "/getAllUrls/",
+    url: "/getallurls/",
     contentType: "json",
     dataType: "json",
     success: function(result){display(result)},
-    error: function(xhr,status,error){updateRes('error: ' + error ) }
+    error: function(xhr,status,error){updateDescription('error: ' + error ) }
+    })
+}
+
+function clearAll(fast){
+    $.ajax({
+    type: "POST",
+    url: "/clearall/",
+    success: function(){updateDescription('')},
+    error: function(){updateDescription('error')}
     })
 }
 
 function display(result){
     updateDescription('');
-    out = '<tr style="text-align: left;"><th>Full Link</th><th>Short Link</th><th>Created</th><th>Number of Clicks</th></tr>'
+    out = '<tr style="text-align: left;"><th>Short Link</th><th>Device</th><th>Full Link</th><th>Created</th><th>Number of Clicks</th></tr>'
     if (result.length > 0){
         updateDescription('Below the ' + result.length + ' shortened urls created:')
         result.map(function(url,number) {
             out += '<tr><td><a href="' + url.shortUrl + '"> ' + url.shortUrl +'</a></td>' + 
-            '<td><a href="' + url.fullUrl + '">' + url.fullUrl +'</a></td>' + 
+            '<td>' + url.deviceType + '</td>' +
+            '<td><a href="' + url.targetUrl + '">' + url.targetUrl +'</a></td>' + 
             '<td>' + url.createdDate + '</td>' +
             '<td>' + url.redirectsCount + '</td></tr>';
         })
@@ -64,6 +112,7 @@ function display(result){
 }
 
 function updateDescription(text){
+    $("#result").html('');
     $("#description").html(text);
 }
 
